@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plotly Bar Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="plotly-bar-chart"></div>
+    <script>
+        const data = [{
+            x: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+            y: [30, 50, 80, 120, 200, 150, 80, 60, 100],
+            type: 'bar',
+            marker: {color: 'teal'}
+        }];
+
+        const layout = {
+            title: 'Simple Bar Chart',
+            xaxis: {title: 'Category'},
+            yaxis: {title: 'Value'}
+        };
+
+        Plotly.newPlot('plotly-bar-chart', data, layout);
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>D3: 日本地図コロプレス（テンプレ）</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- TopoJSONにも対応したい場合は以下をON（TopoJSONをGeoJSONに変換） -->
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <style>
+    :root{
+      --map-height: 520px;
+    }
+    body{ font-family: system-ui, sans-serif; margin: 16px; }
+    #controls{ display:flex; gap:12px; align-items:center; flex-wrap: wrap; margin: 8px 0 16px;}
+    #map-wrap{ width: 100%; max-width: 960px; }
+    svg{ width: 100%; height: var(--map-height); border: 1px solid #ddd; background: #fff; }
+    .pref{ stroke: #ffffff; stroke-width: 0.5; cursor: pointer; }
+    .pref:hover{ stroke-width: 1.5; }
+    .graticule{ fill:none; stroke:#eee; stroke-width:0.5; }
+    .legend{ font-size: 12px; }
+    .tooltip{
+      position: absolute;
+      pointer-events: none;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h2>日本地図にデータを載せる（D3 + GeoPath + Mercator）</h2>
+
+  <div id="controls">
+    <label>
+      カラースケール:
+      <select id="scaleMode">
+        <option value="sequential" selected>連続（sequential）</option>
+        <option value="quantize">段階（quantize）</option>
+      </select>
+    </label>
+    <span id="rangeText"></span>
+  </div>
+
+  <div id="map-wrap">
+    <svg id="map" viewBox="0 0 960 520" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+
+  <script>
+    // ========= ① データ設定：差し替えてください =========
+    // GeoJSON (都道府県ポリゴン)：URL もしくはローカルファイルのパス
+    // 例）https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson など
+    // （組織環境によっては別の構造/プロパティ名のことがあるのでアクセサを後述で調整）
+    const JAPAN_GEO_URL = "YOUR_GEOJSON_URL_HERE.geojson"; // ←差し替え
+
+    // 都道府県コード（JIS 2桁: "01"〜"47"）→ 値
+    // 例：人数、平均時間、スコアなど
+    const valuesByPrefCode = {
+      "01": 12, "02": 20, "03": 35, "04": 18, "05": 9,  "06": 22, "07": 28,
+      "08": 31, "09": 26, "10": 24, "11": 40, "12": 33, "13": 75, "14": 55,
+      "15": 21, "16": 14, "17": 16, "18": 10, "19": 13, "20": 19, "21": 17,
+      "22": 36, "23": 58, "24": 23, "25": 15, "26": 27, "27": 60, "28": 44,
+      "29": 11, "30": 12, "31": 7,  "32": 8,  "33": 18, "34": 29, "35": 14,
+      "36": 9,  "37": 10, "38": 12, "39": 8,  "40": 52, "41": 9,  "42": 13,
+      "43": 20, "44": 11, "45": 10, "46": 15, "47": 25
+    };
+
+    const titleText = "例：都道府県ごとの値（人数/平均時間など）";
+    // ================================================
+
+    // ========= ② 共通ユーティリティ =========
+    // GeoJSONの各フィーチャ（都道府県）から「都道府県コード」を取り出すアクセサ
+    // 各データ源でプロパティ名が違うので、よくある候補を順に試す
+    function getPrefCode(feature){
+      const p = feature.properties || {};
+      // よくある候補（自分のファイルのキーに合わせて調整してください）
+      // 例: jiscode=1..47 / code="01" / id=13 / pref_code / ken_code など
+      let cand =
+        p.jiscode ?? p.JISCODE ??
+        p.code    ?? p.CODE    ??
+        p.pref_code ?? p.PREF_CODE ??
+        p.ken_code  ?? p.KEN_CODE ??
+        feature.id;
+
+      if (cand == null) return null;
+
+      // 数値→2桁文字列、文字列→ゼロ詰め2桁に統一
+      if (typeof cand === "number") {
+        return String(cand).padStart(2, "0");
+      }
+      const s = String(cand).trim();
+      return s.length === 1 ? "0" + s : s;
+    }
+
+    // 値の min/max
+    const vals = Object.values(valuesByPrefCode);
+    const vmin = d3.min(vals), vmax = d3.max(vals);
+
+    // ========= ③ SVG & 投影設定 =========
+    const svg = d3.select("#map");
+    const g = svg.append("g").attr("class", "layer");
+    // 余白調整したければ g に transform を入れる
+    // g.attr("transform", "translate(0,0)");
+
+    const projection = d3.geoMercator(); // 日本用に後で fitSize で調整
+    const geoPath = d3.geoPath(projection);
+
+    // グラティキュール（経緯線）任意
+    const graticule = d3.geoGraticule10();
+    g.append("path").attr("class", "graticule").attr("d", geoPath(graticule));
+
+    // ========= ④ カラースケール（連続/段階 切替） =========
+    const selectScale = d3.select("#scaleMode");
+    let colorScaleSequential = d3.scaleSequential()
+      .domain([vmin, vmax])
+      .interpolator(d3.interpolateBlues);
+
+    let colorScaleQuantize = d3.scaleQuantize()
+      .domain([vmin, vmax])
+      .range(d3.schemeBlues[7]); // 7段階（色数はお好みで）
+
+    // レンジ表示
+    d3.select("#rangeText").text(`値の範囲: ${vmin} 〜 ${vmax}`);
+
+    // ========= ⑤ ツールチップ =========
+    const tooltip = d3.select("#tooltip");
+
+    function showTooltip(html, [x, y]){
+      tooltip
+        .style("opacity", 1)
+        .html(html)
+        .style("left", (x + 12) + "px")
+        .style("top",  (y + 12) + "px");
+    }
+    function hideTooltip(){
+      tooltip.style("opacity", 0);
+    }
+
+    // ========= ⑥ レジェンド（簡易） =========
+    // 連続用：グラデーション、段階用：スウォッチ
+    const legendG = svg.append("g").attr("class", "legend").attr("transform", "translate(12,12)");
+
+    function renderLegend(mode){
+      legendG.selectAll("*").remove();
+
+      legendG.append("text")
+        .attr("x", 0).attr("y", 0)
+        .attr("dy", "0.9em")
+        .text(titleText);
+
+      if(mode === "sequential"){
+        const w = 220, h = 10;
+        const gradId = "legend-grad";
+        const defs = svg.select("defs").empty() ? svg.append("defs") : svg.select("defs");
+        const grad = defs.append("linearGradient").attr("id", gradId);
+        grad.attr("x1", "0%").attr("y1", "0%").attr("x2","100%").attr("y2","0%");
+        // 連続グラデーション
+        d3.range(0, 1.01, 0.1).forEach(t => {
+          grad.append("stop").attr("offset", `${t*100}%`).attr("stop-color", d3.interpolateBlues(t));
+        });
+
+        legendG.append("rect")
+          .attr("x", 0).attr("y", 24).attr("width", w).attr("height", h)
+          .attr("fill", `url(#${gradId})`);
+
+        // 目盛
+        const scale = d3.scaleLinear().domain([vmin, vmax]).range([0, w]);
+        const axi

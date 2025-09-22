@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>D3.js SVG vs Canvas</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      gap: 50px;
+      padding: 20px;
+    }
+    .container {
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    h2 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG描画 -->
+  <div class="container">
+    <h2>SVGで描画</h2>
+    <svg width="200" height="100"></svg>
+  </div>
+
+  <!-- Canvas描画 -->
+  <div class="container">
+    <h2>Canvasで描画</h2>
+    <canvas width="200" height="100"></canvas>
+  </div>
+
+  <script>
+    // SVGで円を描画
+    const svg = d3.select("svg");
+    svg.append("circle")
+       .attr("cx", 100)
+       .attr("cy", 50)
+       .attr("r", 30)
+       .attr("fill", "steelblue");
+
+    // Canvasで円を描画
+    const canvas = d3.select("canvas").node();
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.arc(100, 50, 30, 0, 2 * Math.PI);
+    ctx.fillStyle = "tomato";
+    ctx.fill();
+  </script>
+
+</body>
+</html>

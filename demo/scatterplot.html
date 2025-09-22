@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>D3.js Scatter Plot</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        circle {
+            fill: steelblue; /* 円の色 */
+        }
+        .axis-label {
+            font-size: 14px; /* 軸ラベルのフォントサイズ */
+        }
+    </style>
+</head>
+<body>
+    <svg width="600" height="400"></svg>
+    <script>
+        const svg = d3.select("svg");
+        const margin = { top: 50, right: 30, bottom: 50, left: 60 }; // マージン設定
+        const width  = +svg.attr("width") - margin.left - margin.right; // 描画領域の幅
+        const height = +svg.attr("height") - margin.top - margin.bottom; // 描画領域の高さ
+        const chart = svg.append("g") //グループ要素を追加
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+        // データ: 通学時間（分） × スマホ時間（分）
+        const data = [
+            { commute: 10, smartphone: 120 },
+            { commute: 30, smartphone: 180 },
+            { commute: 20, smartphone: 90 },
+            { commute: 40, smartphone: 200 },
+            { commute: 25, smartphone: 150 }
+        ];
+        // x軸のスケール
+        const x = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.commute) + 10])
+            .range([0, width]);
+        // y軸のスケール
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.smartphone) + 20])
+            .range([height, 0]);
+        //散布図点の描画
+        chart.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", d => x(d.commute))
+            .attr("cy", d => y(d.smartphone))
+            .attr("r", 5);
+        
+        // x軸の描画
+        chart.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+        // y軸の描画
+        chart.append("g")
+            .call(d3.axisLeft(y));
+
+        
+        // 軸ラベル
+        svg.append("text")
+            .attr("x", width / 2 + margin.left)
+            .attr("y", height + margin.top + 40)
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text("通学時間（分）");
+
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2 - margin.top)
+            .attr("y", 20)
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text("スマホ時間（分）");
+
+        // タイトル
+        svg.append("text")
+            .attr("x", width / 2 + margin.left)
+            .attr("y", margin.top / 2)
+            .attr("text-anchor", "middle")
+            .style("font-size", "20px")
+            .text("通学時間 vs スマホ時間 散布図");
+    </script>
+</body>
+</html>

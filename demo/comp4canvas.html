@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Example</title>
+</head>
+<body>
+  <h3>Canvasで描いた丸</h3>
+  <canvas id="myCanvas" width="200" height="200" style="border:1px solid black;"></canvas>
+
+  <script>
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.arc(100, 100, 50, 0, Math.PI * 2);
+    ctx.fill();
+  </script>
+</body>
+</html>

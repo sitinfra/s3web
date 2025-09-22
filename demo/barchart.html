@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>D3.js Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+        .axis-label {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg width="700" height="400"></svg>
+    <script>
+        const svg = d3.select("svg");
+        const margin = { top: 50, right: 30, bottom: 60, left: 60 };
+        const width = +svg.attr("width") - margin.left - margin.right;
+        const height = +svg.attr("height") - margin.top - margin.bottom;
+        const chart = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        // データ: 出身都道府県と人数
+        const data = [
+            { prefecture: "東京", count: 30 },
+            { prefecture: "神奈川", count: 20 },
+            { prefecture: "埼玉", count: 15 },
+            { prefecture: "千葉", count: 25 },
+            { prefecture: "大阪", count: 10 }
+        ];
+        // x軸のスケール
+        const x = d3.scaleBand()
+            .domain(data.map(d => d.prefecture))
+            .range([0, width])
+            .padding(0.3);// 棒の幅を調整 // 0〜1の値で指定
+        
+        // y軸のスケール
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.count)]) // データの最大値まで
+            .nice()// きりの良い数値に調整
+            .range([height, 0]); // yは上が0、下がheightになるので注意
+
+         // 棒（rect要素）の描画
+        chart.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect") // rect要素を追加
+            .attr("class", "bar") // CSSクラスを設定
+            .attr("x", d => x(d.prefecture)) // x位置
+            .attr("y", d => y(d.count)) // y位置
+            .attr("width", x.bandwidth()) // 棒の幅
+            .attr("height", d => height - y(d.count)); // 棒の高さ
+
+        // x軸
+        chart.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+        // y軸
+        chart.append("g")
+            .call(d3.axisLeft(y));
+
+        // x軸ラベル
+        svg.append("text")
+            .attr("x", width / 2 + margin.left)
+            .attr("y", height + margin.top + 40)
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text("出身都道府県");
+
+        // y軸ラベル
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2 - margin.top)
+            .attr("y", 20)
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text("人数");
+
+        // タイトル
+        svg.append("text")
+            .attr("x", width / 2 + margin.left)
+            .attr("y", margin.top / 2)
+            .attr("text-anchor", "middle")
+            .style("font-size", "20px")
+            .text("出身都道府県ごとの人数");
+    </script>
+</body>
+</html>

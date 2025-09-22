@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>DOM検証課題</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      transition: background-color 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <h2>DOM操作の検証</h2>
+  <script>
+    // ボタン要素を生成
+    const btn = document.createElement("button");
+    btn.textContent = "背景色を変える";
+    document.body.appendChild(btn);
+
+    // クリックイベントで背景色をランダムに変更
+    btn.addEventListener("click", () => {
+      const colors = ["lightblue", "lightgreen", "lightpink", "lavender", "beige"];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      document.body.style.backgroundColor = randomColor;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">  <!-- 文字エンコーディング -->
+    <title>D3 Circle Visualization with Scale</title> <!-- ページタイトル -->
+    <script src="https://d3js.org/d3.v7.min.js"></script> <!-- D3.jsの読み込み -->
+</head>
+<body>
+<svg width="400" height="150"></svg>
+    <script>
+        const data = [5, 10, 15]; //データ：半径の値
+        const svg = d3.select("svg");  // SVG要素を選択
+        svg.selectAll("rect") // circle要素を選択
+            .data(data) // データを結びつける
+            .enter() // データの数だけ要素を追加
+            .append("rect") // circle要素を追加
+            .attr("x", (d, i) => 50 - d/2 + i * 100)  // x位置をずらして並べる
+            .attr("y", d=> 75- d/2)                     // y位置を中央に設定
+            .attr("width", d => d)                  // 半径をデータに基づいて設定
+            .attr("height", d => d)                 // 半径をデータに基づいて設定
+            .attr("fill", d => d>10? "red" : "steelblue"); // 塗りつぶしの色を設定
+    </script>
+</body>
+</html>

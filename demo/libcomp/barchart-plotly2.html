@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Plotly Bar Chart</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <div id="plotly-bar-chart"></div>
+  <script>
+    const data = [{
+      x: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+      y: [30, 50, 80, 120, 200, 150, 80, 60, 100],
+      type: 'bar',
+      marker: {color: 'teal'},
+      hoverinfo: 'x+y',  // X軸・Y軸の値をツールチップで表示
+      hoverlabel: { bgcolor: "white", font: {color: "black"} }
+    }];
+
+    const layout = {
+      title: 'Simple Bar Chart (Interactive)',
+      xaxis: { title: 'Category' },
+      yaxis: { title: 'Value' }
+    };
+
+    const config = {
+      responsive: true,
+      displayModeBar: true,   // ツールバーを表示
+      displaylogo: false,     // ロゴを非表示
+      modeBarButtonsToRemove: [] // 全機能有効
+    };
+
+    Plotly.newPlot('plotly-bar-chart', data, layout, config);
+
+    // クリック時にデータ値をコンソール出力（デモ）
+    const chartDiv = document.getElementById('plotly-bar-chart');
+    chartDiv.on('plotly_click', function(data){
+      const point = data.points[0];
+      console.log(`Clicked: Category=${point.x}, Value=${point.y}`);
+      alert(`You clicked: ${point.x}, Value = ${point.y}`);
+    });
+  </script>
+</body>
+</html>

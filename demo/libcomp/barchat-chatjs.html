@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chart.js Bar Chart Full Width</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    #chart-container {
+      width: 100%;
+      height: 400px; /* 高さを固定 */
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+  <h2>Simple Bar Chart</h2>
+  <div id="chart-container">
+    <canvas id="barChart"></canvas>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('barChart').getContext('2d');
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+        datasets: [{
+          label: 'Value',
+          data: [30, 50, 80, 120, 200, 150, 80, 60, 100],
+          backgroundColor: 'teal'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // 高さ固定を有効にする
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Category'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Value'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Simple Bar Chart'
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
